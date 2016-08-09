@@ -110,6 +110,7 @@ hex_viewer(void *address, int cursor)
 		if (key == 25) {
 			return 0;  // exit program
 		} else if (key == 20 || key == 22) {
+			// [UP], [DOWN]
 			int delta = (
 				cursor == 5? 0x08:
 				cursor == 4? 0x40:
@@ -117,14 +118,20 @@ hex_viewer(void *address, int cursor)
 			);
 			address += (key - 21) * delta;
 			return hex_viewer(address, cursor);
-		} else if (key == 21 || key == 23) {
+		} else {
+			// [0] - [9], [A] - [F]
+			if (0x0 <= key && key <= 0xF) {
+				address = (int)address & ~(0xF << (20 - cursor * 4));
+				address = (int)address |  (key << (20 - cursor * 4));
+				key = 23;  // move to the next digit automatically
+			}
+
+			// [LEFT], [RIGHT]
 			int next_cursor = cursor + key - 22;
 			if (-2 <= next_cursor && next_cursor <= 5) {
-				return hex_viewer(address, next_cursor);
+				cursor = next_cursor;
 			}
-		} else if (0x0 <= key && key <= 0xF) {
-			gotoxy(6, 0);
-			printf("%x\n", key);
+			return hex_viewer(address, cursor);
 		}
 	}
 }
