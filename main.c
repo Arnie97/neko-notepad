@@ -33,7 +33,7 @@ event_handler(unsigned row, unsigned col)
 	// [APLET]
 	if (row == 0 && col == 7) {
 		// exit immediately
-		return 5;
+		return 25;
 	} else {
 		// wait until the key is released
 		while (any_key_pressed);
@@ -42,28 +42,26 @@ event_handler(unsigned row, unsigned col)
 	// [UP]: 0, [LEFT]: 1, [DOWN]: 2, [RIGHT]: 3
 	if (col == 6 && row < 4) {
 		return row + 20;
-	} else if (row <= 6 && col <= 4) {
-		int ch = row * 5 - col + 'D';  // letter keys
-		if (ch == 'D') {
-			return 0;  // [DEL]
-		} else if (ch < 'D') {
+	} else if (row <= 2 && col <= 4) {
+		int ch = row * 5 - col + 0xD;  // letter keys
+		if (ch == 0xD) {
+			return -1;  // [DEL]
+		} else if (ch < 0xD) {
 			ch++;  // skip the [DEL] key after [D]
-		} else if (ch >= 'T') {
-			ch--;  // skip the [ALPHA] key before [T]
-			if (ch >= 'X') {
-				ch--;  // skip the [SHIFT] key before [X]
-				if (row == 6 && col == 0) {
-					return 6;  // [ENTER]
-				} else if (ch > 'Z') {
-					return 0;
-				}
-			}
+		} else if (ch > 0xF) {
+			return -1;
 		}
 		return ch;
+	} else if (row >= 3 && 1 <= col && col <= 3) {
+		return row == 6? (
+			col == 3? 0: -1
+		):(
+			(6 - row) * 3 - col + 1
+		);
 	}
 
 	// unhandled keys
-	return 0;
+	return -1;
 }
 
 
@@ -109,16 +107,24 @@ hex_viewer(void *address, int cursor)
 	putchar(0xAF);
 	for (;;) {
 		int key = get_key();
-		if (key == 5) {
+		if (key == 25) {
 			return 0;  // exit program
 		} else if (key == 20 || key == 22) {
-			address -= (key - 21) * (1ull << (20 - cursor * 4));
+			int delta = (
+				cursor == 5? 0x08:
+				cursor == 4? 0x40:
+				(1ull << (20 - cursor * 4))
+			);
+			address += (key - 21) * delta;
 			return hex_viewer(address, cursor);
 		} else if (key == 21 || key == 23) {
 			int next_cursor = cursor + key - 22;
 			if (-2 <= next_cursor && next_cursor <= 5) {
 				return hex_viewer(address, next_cursor);
 			}
+		} else if (0x0 <= key && key <= 0xF) {
+			gotoxy(6, 0);
+			printf("%x\n", key);
 		}
 	}
 }
