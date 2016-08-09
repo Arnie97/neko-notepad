@@ -76,6 +76,14 @@ hex_viewer(void *address, int cursor)
 		(unsigned)address >> 24
 	);
 
+	puts(
+		"\n\n"
+		"WARNING: KERNEL PANIC DUE TO\n\n"
+		"MEMORY ACCESS VIOLATION\n\n\n\n"
+		"PRESS THE RESET HOLE TO RECOVER"
+	);
+	gotoxy(0, 1);
+
 	char *p = address;
 	for (int row = 1; row < 10; row++) {
 		printf(
