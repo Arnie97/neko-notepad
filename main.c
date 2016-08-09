@@ -71,11 +71,13 @@ int
 hex_viewer(void *address, int cursor)
 {
 	clear_screen();
+	// print first 2 bits in the memory address
 	printf(
 		"[0x%02x]  0 1 2 3  4 5 6 7 01234567",
 		(unsigned)address >> 24
 	);
 
+	// the system will halt during an memory access violation
 	puts(
 		"\n\n"
 		"WARNING: KERNEL PANIC DUE TO\n\n"
@@ -86,12 +88,18 @@ hex_viewer(void *address, int cursor)
 
 	char *p = address;
 	for (int row = 1; row < 10; row++) {
-		printf(
-			"%06x %08x %08x ",
-			(unsigned)p & 0x00FFFFFF,
-			*p, *(p + 4)
-		);
-		for (int bit = 0; bit < 8; bit++, p++) {
+		// print last 6 bits in the memory address
+		printf("%06x ", (unsigned)p & 0x00FFFFFF);
+
+		for (int byte = 0; byte < 8; byte++, p++) {
+			printf("%02x", *p);
+			if ((byte & 0x3) == 0x3) {
+				putchar(' ');
+			}
+		}
+		p -= 8;
+
+		for (int byte = 0; byte < 8; byte++, p++) {
 			#define isprint(c) ((c) >= ' ')
 			putchar(isprint(*p)? *p: '.');
 		}
