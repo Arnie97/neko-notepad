@@ -68,7 +68,7 @@ event_handler(unsigned row, unsigned col)
 
 
 int
-hex_viewer(void *address)
+hex_viewer(void *address, int cursor)
 {
 	clear_screen();
 	printf(
@@ -89,18 +89,20 @@ hex_viewer(void *address)
 		}
 	}
 
+	gotoxy(cursor, 10);
+	putchar(0xAF);
 	for (;;) {
 		int key = get_key();
 		if (key == 5) {
 			return 0;  // exit program
-		} else if (key == 20) {
-			return hex_viewer(address - 0x40);
-		} else if (key == 21) {
-			return hex_viewer(address - 0x10000);
-		} else if (key == 22) {
-			return hex_viewer(address + 0x40);
-		} else if (key == 23) {
-			return hex_viewer(address + 0x10000);
+		} else if (key == 20 || key == 22) {
+			address -= (key - 21) * (1ull << (20 - cursor * 4));
+			return hex_viewer(address, cursor);
+		} else if (key == 21 || key == 23) {
+			int next_cursor = cursor + key - 22;
+			if (-2 <= next_cursor && next_cursor <= 5) {
+				return hex_viewer(address, next_cursor);
+			}
 		}
 	}
 }
