@@ -55,7 +55,7 @@ _start(void)
 
 	// will return 0 when exitting
 	if (_exit_save((unsigned *)state_buffer)) {
-		note_explorer(NULL);
+		saturn_explorer(_sat_dir_getroot(), NULL, NULL);
 		__exit_cleanup();
 	}
 

@@ -95,55 +95,73 @@ display_title(const char *str)
 
 
 int
-note_explorer(SAT_DIR_ENTRY *init)
+saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
 {
-	display_title("Neko Notepad");
+	display_title(parent == __sat_root? "Saturn Explorer": parent->name);
 	putchar('\n');
 
-	if (!init) {
-		SAT_DIR_NODE *dir = _sat_find_path("/'notesdir");
-		init = dir->object;
+	if (!entry && !node) {
+		node = parent->child;
 	} else {
 		hpg_set_indicator(HPG_INDICATOR_LSHIFT, 0xFF);
 	}
 
-	unsigned count = 0;
-	SAT_DIR_ENTRY *next_page = NULL;
-	for (SAT_DIR_ENTRY *entry = init; entry; entry = entry->next) {
-		SAT_OBJ_DSCR *obj = entry->sat_obj;
-		if (obj->name[0] == ';') {
-			continue;
+	volatile unsigned count = 0;
+	SAT_DIR_NODE *node_next_page = NULL;
+	if (!entry) {
+		for (SAT_DIR_NODE *n = node; n; n = n->sibling) {
+			if (count == 8) {
+				node_next_page = n;
+				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
+				break;
+			}
+			count++;
+			printf(" %2u %26s/\n", count, n->name);
 		}
-		if (count == 8) {
-			next_page = entry;
-			hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
-			break;
-		}
-		count++;
-		printf(
-			" %2u %21s%6d\n",
-			count, obj->name + 1, sat_strlen(obj->addr)
-		);
+		entry = parent->object;
 	}
-	gotoxy(0, 9);
+
+	SAT_DIR_ENTRY *entry_next_page = NULL;
+	if (!node_next_page) {
+		for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
+			if (count == 8) {/*
+				entry_next_page = e;
+				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);*/
+				break;
+			}
+			count++;
+			printf(
+				" %2u %21s%6d\n",
+				count, e->sat_obj->name, sat_strlen(e->sat_obj->addr)
+			);
+		}
+	}
 
 	for (;;) {
 		int key = get_key();
 		if (key == 27) {
 			return 0;  // exit program
-		} else if ((key == 22 || key == 23) && next_page) {
-			return note_explorer(next_page);  // page down
-		} else if (key == 20 || key == 21 || key == 26) {
-			return note_explorer(NULL);  // go home
+		} else if (key == 22 || key == 23) {
+			if (node_next_page) {  // page down
+				return saturn_explorer(parent, node_next_page, NULL);
+			} else if (entry_next_page) {
+				return saturn_explorer(parent, NULL, entry_next_page);
+			}
+		} else if (key == 20 || key == 21) {
+			return saturn_explorer(parent, NULL, NULL);  // first page
 		} else if (1 <= key && key <= count) {
-			for (SAT_DIR_ENTRY *entry = init; entry; entry = entry->next) {
-				SAT_OBJ_DSCR *obj = entry->sat_obj;
-				if (obj->name[0] == ';') {
-					continue;
+			if (node) {
+				for (SAT_DIR_NODE *n = node; n; n = n->sibling) {
+					key--;
+					if (!key) {
+						return saturn_explorer(n, NULL, NULL);
+					}
 				}
+			}
+			for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
 				key--;
 				if (!key) {
-					return note_viewer(obj, 0);
+					return object_viewer(parent, e->sat_obj);
 				}
 			}
 		}
@@ -152,11 +170,11 @@ note_explorer(SAT_DIR_ENTRY *init)
 
 
 int
-note_viewer(SAT_OBJ_DSCR *obj, unsigned offset)
+object_viewer(SAT_DIR_NODE *parent, SAT_OBJ_DSCR *obj)
 {
 	display_title(obj->name + 1);
 	char *buf = sat_strdup(obj->addr);
-	puts(buf + offset);
+	puts(buf);
 	free(buf);
 
 	for (;;) {
@@ -164,7 +182,7 @@ note_viewer(SAT_OBJ_DSCR *obj, unsigned offset)
 		if (key == 27) {
 			return 0;  // exit program
 		} else if (key == 26) {
-			return note_explorer(NULL);  // go home
+			return saturn_explorer(parent, NULL, NULL);  // go home
 		}
 	}
 }
