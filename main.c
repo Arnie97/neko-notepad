@@ -38,12 +38,16 @@ event_handler(unsigned row, unsigned col)
 		return 27;
 	} else {
 		// wait until the key is released
+		hpg_set_indicator(HPG_INDICATOR_WAIT, 0xFF);
 		while (any_key_pressed);
+		hpg_set_indicator(HPG_INDICATOR_WAIT, 0x00);
 	}
 
 	// [UP]: 0, [LEFT]: 1, [DOWN]: 2, [RIGHT]: 3
 	if (col == 6) {
 		return row + 20;
+	} else if (row == 1 && col == 7) {
+		return 28;  // [VIEWS]
 	} else if (3 <= row && row <= 5 && 1 <= col && col <= 3) {
 		return (6 - row) * 3 - col + 1;
 	}
@@ -51,6 +55,7 @@ event_handler(unsigned row, unsigned col)
 	// unhandled keys
 	return 0;
 }
+
 
 inline int
 sat_strlen(unsigned sat_addr)
@@ -124,9 +129,9 @@ saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
 	SAT_DIR_ENTRY *entry_next_page = NULL;
 	if (!node_next_page) {
 		for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
-			if (count == 8) {/*
+			if (count == 8) {
 				entry_next_page = e;
-				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);*/
+				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
 				break;
 			}
 			count++;
@@ -149,6 +154,10 @@ saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
 			}
 		} else if (key == 20 || key == 21) {
 			return saturn_explorer(parent, NULL, NULL);  // first page
+		} else if (key == 26) {
+			return saturn_explorer(__sat_root, NULL, NULL);  // go home
+		} else if (key == 28 && parent != __sat_root) {
+			return saturn_explorer(parent->parent, NULL, NULL);  // go back
 		} else if (1 <= key && key <= count) {
 			if (node) {
 				for (SAT_DIR_NODE *n = node; n; n = n->sibling) {
@@ -182,7 +191,9 @@ object_viewer(SAT_DIR_NODE *parent, SAT_OBJ_DSCR *obj)
 		if (key == 27) {
 			return 0;  // exit program
 		} else if (key == 26) {
-			return saturn_explorer(parent, NULL, NULL);  // go home
+			return saturn_explorer(__sat_root, NULL, NULL);  // go home
+		} else if (key == 28) {
+			return saturn_explorer(parent, NULL, NULL);  // go back
 		}
 	}
 }

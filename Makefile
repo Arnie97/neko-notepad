@@ -26,7 +26,7 @@ INC ?= "$(HPGCC)\include"
 LIB ?= "$(HPGCC)\lib"
 
 
-CFLAGS ?= -std=c99 -Wall -Os -I$(INC) -L$(LIB) \
+CFLAGS ?= -std=c99 -Wall -O0 -I$(INC) -L$(LIB) \
 	-mtune=arm920t -mcpu=arm920t -mlittle-endian -fomit-frame-pointer
 
 crt0.o: CFLAGS += -msingle-pic-base -fpic -mpic-register=r10 -msoft-float
