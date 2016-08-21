@@ -27,4 +27,13 @@ int event_handler(unsigned row, unsigned col);
 int saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry);
 int object_viewer(SAT_DIR_NODE *parent, SAT_OBJ_DSCR *obj);
 
+typedef _Bool bool;
+typedef struct {
+    union {
+        SAT_DIR_NODE *node;
+        SAT_DIR_ENTRY *entry;
+    } data;
+    int type;
+} SAT_DIR_ITEM;
+
 #endif

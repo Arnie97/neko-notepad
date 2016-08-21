@@ -99,42 +99,42 @@ display_title(const char *str)
 }
 
 
-int
-saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
+SAT_DIR_ITEM
+iterate_helper(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry, int max, bool print)
 {
-	display_title(parent == __sat_root? "Saturn Explorer": parent->name);
-	putchar('\n');
-
 	if (!entry && !node) {
 		node = parent->child;
 	} else {
 		hpg_set_indicator(HPG_INDICATOR_LSHIFT, 0xFF);
 	}
 
-	volatile unsigned count = 0;
-	SAT_DIR_NODE *node_next_page = NULL;
+	unsigned count = 0;
+	SAT_DIR_ITEM next_page = {.type = 0};
 	if (!entry) {
 		for (SAT_DIR_NODE *n = node; n; n = n->sibling) {
-			if (count == 8) {
-				node_next_page = n;
+			if (count == max) {
 				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
-				break;
+				next_page.type = 1;
+				next_page.data.node = n;
+				return next_page;
 			}
 			count++;
-			printf(" %2u %26s/\n", count, n->name);
+			if (print) {
+				printf(" %2u %26s/\n", count, n->name);
+			}
 		}
 		entry = parent->object;
 	}
 
-	SAT_DIR_ENTRY *entry_next_page = NULL;
-	if (!node_next_page) {
-		for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
-			if (count == 8) {
-				entry_next_page = e;
-				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
-				break;
-			}
-			count++;
+	for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
+		if (count == max) {
+			hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
+			next_page.type = 2;
+			next_page.data.entry = e;
+			return next_page;
+		}
+		count++;
+		if (print) {
 			printf(
 				" %2u %21s%6d\n",
 				count, e->sat_obj->name, sat_strlen(e->sat_obj->addr)
@@ -142,15 +142,27 @@ saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
 		}
 	}
 
+	return next_page;
+}
+
+
+int
+saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
+{
+	display_title(parent == __sat_root? "Saturn Explorer": parent->name);
+	putchar('\n');
+
+	SAT_DIR_ITEM next_page = iterate_helper(parent, node, entry, 8, 1);
+
 	for (;;) {
 		int key = get_key();
 		if (key == 27) {
 			return 0;  // exit program
 		} else if (key == 22 || key == 23) {
-			if (node_next_page) {  // page down
-				return saturn_explorer(parent, node_next_page, NULL);
-			} else if (entry_next_page) {
-				return saturn_explorer(parent, NULL, entry_next_page);
+			if (next_page.type == 1) {  // page down
+				return saturn_explorer(parent, next_page.data.node, NULL);
+			} else if (next_page.type == 2) {
+				return saturn_explorer(parent, NULL, next_page.data.entry);
 			}
 		} else if (key == 20 || key == 21) {
 			return saturn_explorer(parent, NULL, NULL);  // first page
@@ -158,20 +170,12 @@ saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
 			return saturn_explorer(__sat_root, NULL, NULL);  // go home
 		} else if (key == 28 && parent != __sat_root) {
 			return saturn_explorer(parent->parent, NULL, NULL);  // go back
-		} else if (1 <= key && key <= count) {
-			if (node) {
-				for (SAT_DIR_NODE *n = node; n; n = n->sibling) {
-					key--;
-					if (!key) {
-						return saturn_explorer(n, NULL, NULL);
-					}
-				}
-			}
-			for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
-				key--;
-				if (!key) {
-					return object_viewer(parent, e->sat_obj);
-				}
+		} else if (1 <= key && key <= 9) {
+			SAT_DIR_ITEM child = iterate_helper(parent, node, entry, key - 1, 0);
+			if (child.type == 1) {
+				return saturn_explorer(child.data.node, NULL, NULL);
+			} else if (child.type == 2) {
+				return object_viewer(parent, child.data.entry->sat_obj);
 			}
 		}
 	}
