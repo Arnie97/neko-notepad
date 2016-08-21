@@ -128,7 +128,9 @@ iterate_helper(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry, i
 
 	for (SAT_DIR_ENTRY *e = entry; e; e = e->next) {
 		if (count == max) {
-			hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
+			if (print) {
+				hpg_set_indicator(HPG_INDICATOR_RSHIFT, 0xFF);
+			}
 			next_page.type = 2;
 			next_page.data.entry = e;
 			return next_page;
@@ -175,7 +177,10 @@ saturn_explorer(SAT_DIR_NODE *parent, SAT_DIR_NODE *node, SAT_DIR_ENTRY *entry)
 			if (child.type == 1) {
 				return saturn_explorer(child.data.node, NULL, NULL);
 			} else if (child.type == 2) {
-				return object_viewer(parent, child.data.entry->sat_obj);
+				int size = sat_strlen(child.data.entry->sat_obj->addr);
+				if (0 <= size && size < 33 * 9) {
+					return object_viewer(parent, child.data.entry->sat_obj);
+				}
 			}
 		}
 	}
