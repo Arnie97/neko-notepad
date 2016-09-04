@@ -18,7 +18,8 @@ CC := $(TARGET)-gcc
 LD := $(TARGET)-ld
 
 ELF2HP ?= elf2hp
-HP2APT ?= hp2aplet
+HP2APT ?= ./hp2aplet
+KEYGEN ?= ./keygen
 
 SRC ?= $(wildcard *.c)
 OBJ ?= $(SRC:%.c=%.o)
@@ -30,6 +31,7 @@ CFLAGS ?= -std=c99 -Wall -Os -I$(INC) -L$(LIB) \
 	-mtune=arm920t -mcpu=arm920t -mlittle-endian -fomit-frame-pointer
 
 crt0.o: CFLAGS += -msingle-pic-base -fpic -mpic-register=r10 -msoft-float
+main.o: CFLAGS += -DVALID_HASH=$(shell $(KEYGEN) $(SN))
 
 LDFLAGS := -L$(LIB) -T MMUld.script \
 	-lwin -lggl -lhpg -lhplib -lgcc
@@ -43,7 +45,7 @@ clean:
 	rm *.o *.elf *.hp
 
 %.apt: %.hp
-	$(HP2APT) $< $@
+	$(HP2APT) $< $@ "Neko Notepad"
 
 %.hp: %.elf
 	$(ELF2HP) $< $@

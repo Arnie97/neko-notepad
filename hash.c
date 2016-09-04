@@ -1,4 +1,4 @@
-/* A simple user interface for this project
+/* Implementation of Fletcher-16 checksum from Wikipedia
 
 Copyright (C) 2016 Arnie97
 
@@ -18,16 +18,28 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
-#ifndef _MAIN_H
-#define _MAIN_H
-
 #include <stdint.h>
-#include <satdir.h>
 
-int event_handler(unsigned row, unsigned col);
-int note_explorer(SAT_DIR_ENTRY *init);
-int note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref);
 
-uint16_t hash(const char *str);
+uint16_t
+hash(const char *data)
+{
+	uint8_t sum1 = 0, sum2 = 0;
+	while (*data) {
+		sum1 = (sum1 + *data++) % 255;
+		sum2 = (sum2 + sum1) % 255;
+	}
+	return (sum2 << 8) | sum1;
+}
+
+
+#ifndef __ARM_ARCH_4T__
+#include <stdio.h>
+
+int
+main(int argc, const char *argv[])
+{
+	printf("%u\n", argc == 2? hash(argv[1]): 0);
+}
 
 #endif
