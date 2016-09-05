@@ -28,7 +28,7 @@ typedef struct node {
     void *data;
 } NODE;
 
-void push(NODE **head, const void *data);
+void push(NODE **head, void *data);
 void *pop(NODE **head);
 
 #endif

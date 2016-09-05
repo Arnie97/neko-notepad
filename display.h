@@ -21,36 +21,36 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
-#define rows            8
-#define cols_storage    8
-#define cols_real       9
-#define bytes_per_glyph ((rows * cols_storage + 7) / 8)
+#define ROWS            8
+#define COLS_STORAGE    8
+#define COLS_REAL       9
+#define BYTES_PER_GLYPH ((ROWS * COLS_STORAGE + 7) / 8)
 
-#define width           131
-#define height          64
-#define bytes_per_row   20
+#define SCREEN_WIDTH    131
+#define SCREEN_HEIGHT   64
+#define BYTES_PER_ROW   20
 
-#define left_margin     3
-#define top_margin      1
-#define line_spacing    1
+#define LEFT_MARGIN     3
+#define TOP_MARGIN      1
+#define LINE_SPACING    1
 
 #include <stdint.h>
 extern uint8_t *__display_buf;
 
-#define indicator(n) __display_buf[bytes_per_row * (n) + (width >> 3)]
-#define indicator_mask (1 << (width & 7))
-#define get_indicator(n) (indicator(n) | indicator_mask)
+#define indicator(n) __display_buf[BYTES_PER_ROW * (n) + (SCREEN_WIDTH >> 3)]
+#define INDICATOR_MASK (1 << (SCREEN_WIDTH & 7))
+#define get_indicator(n) (indicator(n) | INDICATOR_MASK)
 #define set_indicator(n, value) { \
-    if (value) indicator(n) |= indicator_mask; \
-    else indicator(n) &= ~indicator_mask; \
+	if (value) indicator(n) |= INDICATOR_MASK; \
+	else indicator(n) &= ~INDICATOR_MASK; \
 };
 
-#define indicator_remote    0
-#define indicator_lshift    1
-#define indicator_rshift    2
-#define indicator_alpha     3
-#define indicator_battery   4
-#define indicator_wait      5
+#define INDICATOR_REMOTE    0
+#define INDICATOR_LSHIFT    1
+#define INDICATOR_RSHIFT    2
+#define INDICATOR_ALPHA     3
+#define INDICATOR_BATTERY   4
+#define INDICATOR_WAIT      5
 
 const char *bitmap_blit(const char *text);
 

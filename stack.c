@@ -22,7 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 void
-push(NODE **head, const void *data)
+push(NODE **head, void *data)
 {
 	NODE *n = sys_chkptr(malloc(sizeof(NODE)));
 	n->prev = *head;

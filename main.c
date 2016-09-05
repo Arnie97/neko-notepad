@@ -38,9 +38,9 @@ event_handler(unsigned row, unsigned col)
 		return 27;
 	} else {
 		// wait until the key is released
-		set_indicator(indicator_wait, TRUE);
+		set_indicator(INDICATOR_WAIT, TRUE);
 		while (any_key_pressed);
-		set_indicator(indicator_wait, FALSE);
+		set_indicator(INDICATOR_WAIT, FALSE);
 	}
 
 	// [UP]: 0, [LEFT]: 1, [DOWN]: 2, [RIGHT]: 3
@@ -131,7 +131,7 @@ note_explorer(SAT_DIR_ENTRY *init)
 		SAT_DIR_NODE *dir = _sat_find_path("/'notesdir");
 		init = dir->object;
 	} else {
-		set_indicator(indicator_lshift, TRUE);
+		set_indicator(INDICATOR_LSHIFT, TRUE);
 	}
 
 	unsigned count = 0;
@@ -143,7 +143,7 @@ note_explorer(SAT_DIR_ENTRY *init)
 		}
 		if (count == 8) {
 			next_page = entry;
-			set_indicator(indicator_rshift, TRUE);
+			set_indicator(INDICATOR_RSHIFT, TRUE);
 			break;
 		}
 		count++;
@@ -208,7 +208,7 @@ note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 		} else if ((key == 22 || key == 23) && *next_page) {
 			refresh: push(&head, next_page);
 			next_page = bitmap_blit(next_page);  // page down
-			set_indicator(indicator_lshift, head->data != buf);
+			set_indicator(INDICATOR_LSHIFT, head->data != buf);
 		} else if (key == 20 || key == 21) {
 			pop(&head);
 			next_page = pop(&head);  // page up
