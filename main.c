@@ -33,7 +33,7 @@ int
 event_handler(unsigned row, unsigned col)
 {
 	// [APLET], [HOME]
-	if (row == 0 && col == 7 || row == 6 && col == 6) {
+	if (row == 0 && (col == 7 || col == 4) || row == 6 && col == 6) {
 		// exit immediately
 		return 27;
 	} else {

@@ -32,6 +32,8 @@ get_key(void)
 	// deal with the modifier keys
 	if (comma_pressed) {
 		return event_handler(3, 4);
+	} else if (on_pressed) {
+		return event_handler(0, 4);
 	} else if (!any_normal_key_pressed) {
 		return 0;
 	}
