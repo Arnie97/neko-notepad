@@ -55,6 +55,3 @@ clean:
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
-hp39dir.000:
-	echo "HP39AscA B 16 neko_notepad.apt12 Neko Notepad H 10 lib275.sys7 LIB275L " > $@

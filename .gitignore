@@ -1,2 +1,8 @@
+*.o
+*.elf
+*.hp
+*.apt
+*.cur
+*.exe
 __pycache__/
 *.py[cod]
