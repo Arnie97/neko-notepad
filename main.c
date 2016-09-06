@@ -104,7 +104,9 @@ display_item(unsigned count, SAT_OBJ_DSCR *obj)
 {
 	putchar(' ');
 	putchar(' ');
+	putchar('[');
 	putchar('0' + count);
+	putchar(']');
 	putchar(' ');
 
 	char *name = obj->name + 1;
@@ -114,7 +116,7 @@ display_item(unsigned count, SAT_OBJ_DSCR *obj)
 
 	char buf[7];
 	utoa(sat_strlen(obj->addr), buf, 10);
-	for (unsigned i = obj->name - name - strlen(buf) + 28; i > 0; i--) {
+	for (unsigned i = obj->name - name - strlen(buf) + 26; i > 0; i--) {
 		putchar(' ');
 	}
 	puts(buf);
