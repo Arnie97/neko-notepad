@@ -183,18 +183,13 @@ note_explorer(SAT_DIR_ENTRY *init)
 int
 note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 {
-	const char
-	*anti_piracy = "\n\n\xC4\xFA\xCA\xC7\xB5\xC1\xB0\xE6\xC8\xED\xBC\xFE"
-		"\xB5\xC4\xCA\xDC\xBA\xA6\xD5\xDF!\n"
-		"\xC7\xEB\xD3\xEB\xC8\xED\xBC\xFE\xD7\xF7\xD5\xDF\xC1\xAA\xCF\xB5\xA1\xA3"
-		"\n\n\xBC\xC6\xCB\xE3\xC6\xF7\xD0\xF2\xC1\xD0\xBA\xC5:\n",
-	*serial_no = (const char *)SysCall(GetSerialEntry);
-
 	char *buf;
-	if (hash(serial_no) != VALID_HASH) {
-		buf = sys_chkptr(malloc(strlen(anti_piracy) + strlen(serial_no) + 1));
-		strcpy(buf, anti_piracy);
-		strcpy(buf + strlen(anti_piracy), serial_no);
+	if (hash(ROM->serial_no) != VALID_HASH) {
+		buf = sys_chkptr(malloc(
+			strlen(ROM->anti_piracy) + strlen(ROM->serial_no) + 1
+		));
+		strcpy(buf, ROM->anti_piracy);
+		strcat(buf, ROM->serial_no);
 	} else {
 		buf = sat_strdup(obj->addr);
 	}

@@ -24,11 +24,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 struct rom {
 	int magic;
 	struct font **fonts;
+	int screen_height;
+	const char *anti_piracy;
+	const char *serial_no;
 };
 
 #define ROM             ((struct rom *)0x3FF00)
 #define SCREEN_WIDTH    131
-#define SCREEN_HEIGHT   64
+#define SCREEN_HEIGHT   (ROM->screen_height)
 #define BYTES_PER_ROW   20
 
 struct font {
