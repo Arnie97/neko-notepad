@@ -21,28 +21,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <stdint.h>
 #include <syscall.h>
 #include <hpstring.h>
-#include "s3c2410.h"
 #include "display.h"
 
 
-// {rom_address, code_point}
-static const size_t offset[][2] = {
-	{0x7FD10, 0},
-	{0xBF640, 110},
-	{0xE2920, 94 * 4},
-	{0xE2BD0, 94 * 5},
-	{0xE2C90, 502},
-	{0xE2D50, 94 * 6},
-	{0xE2E60, 94 * 7},
-	{0xDEEA0, 612},
-	{0xBFE50, 694},
-	{0x3ABF0, 94 * 15},
-	{0xF7020, 94 * 15 + 0x5400 / BYTES_PER_GLYPH},
-};
-
-
 void *
-get_bitmap_font(const uint8_t **bytes)
+get_pixel_font(const uint8_t **bytes, struct font *f)
 {
 	int page = 0[*bytes] - 0xA0;  // 区码
 	int id   = 1[*bytes] - 0xA0;  // 位码
@@ -55,10 +38,11 @@ get_bitmap_font(const uint8_t **bytes)
 	}
 
 	size_t code_point = ((page - 1) * 94 + (id - 1));
-	for (size_t i = sizeof(offset) / sizeof(*offset); i >= 0; i--) {
+	int (*offset)[2] = f->chunks;
+	for (int i = 0; offset[i - 1][1]; i++) {
 		if (code_point >= offset[i][1]) {
 			code_point -= offset[i][1];
-			code_point *= BYTES_PER_GLYPH;
+			code_point *= BYTES_PER_GLYPH(f);
 			code_point += offset[i][0];
 			return (void *)code_point;
 		}
@@ -69,7 +53,7 @@ get_bitmap_font(const uint8_t **bytes)
 int
 font_not_found(void)
 {
-	if (*MAGIC == 0xC0DEBA5E) {
+	if (ROM->magic == 0xC0DEBA5E) {
 		return 0;
 	}
 	const uint8_t *msg = (
@@ -90,7 +74,7 @@ font_not_found(void)
 
 
 const char *
-bitmap_blit(const char *text)
+bitmap_blit(const char *text, struct font *f)
 {
 	SysCall(ClearLcdEntry);
 	if (font_not_found()) {
@@ -98,18 +82,29 @@ bitmap_blit(const char *text)
 	} else if (*text == '\n') {
 		text++;  // omit line breaks between pages
 	}
-	int x = LEFT_MARGIN, y = TOP_MARGIN;
+	int x = f->LEFT_MARGIN, y = f->TOP_MARGIN;
+
+	// go through the text
 	while (*text) {
 		if (*text == '\n') {
 			text++;
 			x = SCREEN_WIDTH;
-			y += ROWS;
+			y += f->ROWS;
 			goto next;
 		}
-		uint8_t pos = 7, *ptr = get_bitmap_font((const uint8_t **)&text);
-		for (size_t row = 0; row < ROWS; row++, y++) {
-			for (size_t col = 0; col < COLS_STORAGE; col++, x++) {
-				__display_buf[y * BYTES_PER_ROW + (x >> 3)] |= ((*ptr >> pos) & 1) << (x & 7);
+
+		// get the pixel font of current glyph
+		uint8_t pos = 7, *ptr = get_pixel_font((const uint8_t **)&text, f);
+
+		// draw the glyph
+		for (size_t row = 0; row < f->ROWS; row++, y++) {
+			for (size_t col = 0; col < f->COLS_STORAGE; col++, x++) {
+
+				// fill the pixels bit by bit
+				unsigned pixel = ((*ptr >> pos) & 1);
+				__display_buf[y * BYTES_PER_ROW + (x >> 3)] |= pixel << (x & 7);
+
+				// byte alignment
 				if (pos) {
 					pos--;
 				} else {
@@ -117,14 +112,15 @@ bitmap_blit(const char *text)
 					ptr++;
 				}
 			}
-			x -= COLS_STORAGE; }
+			x -= f->COLS_STORAGE;
+		}
 
-		next: if (x + COLS_REAL <= SCREEN_WIDTH - COLS_REAL) {  // next char
-			x += COLS_REAL;
-			y -= ROWS;
-		} else if (y + LINE_SPACING + ROWS <= SCREEN_HEIGHT) {  // next line
-			x = LEFT_MARGIN;
-			y += LINE_SPACING;
+		next: if (x + f->COLS_REAL <= SCREEN_WIDTH - f->COLS_REAL) {  // next char
+			x += f->COLS_REAL;
+			y -= f->ROWS;
+		} else if (y + f->LINE_SPACING + f->ROWS <= SCREEN_HEIGHT) {  // next line
+			x = f->LEFT_MARGIN;
+			y += f->LINE_SPACING;
 		} else {  // next page
 			break;
 		}

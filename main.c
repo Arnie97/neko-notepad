@@ -209,7 +209,7 @@ note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 			return 0;  // exit program
 		} else if ((key == 22 || key == 23) && *next_page) {
 			refresh: push(&head, next_page);
-			next_page = bitmap_blit(next_page);  // page down
+			next_page = bitmap_blit(next_page, ROM->fonts[0]);  // page down
 			set_indicator(INDICATOR_LSHIFT, head->data != buf);
 		} else if (key == 20 || key == 21) {
 			pop(&head);

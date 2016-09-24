@@ -21,18 +21,29 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
-#define ROWS            8
-#define COLS_STORAGE    8
-#define COLS_REAL       9
-#define BYTES_PER_GLYPH ((ROWS * COLS_STORAGE + 7) / 8)
+struct rom {
+	int magic;
+	struct font **fonts;
+};
 
+#define ROM             ((struct rom *)0x3FF00)
 #define SCREEN_WIDTH    131
 #define SCREEN_HEIGHT   64
 #define BYTES_PER_ROW   20
 
-#define LEFT_MARGIN     3
-#define TOP_MARGIN      1
-#define LINE_SPACING    1
+struct font {
+	char ROWS;
+	char COLS_STORAGE;
+	char COLS_REAL;
+
+	char LEFT_MARGIN;
+	char TOP_MARGIN;
+	char LINE_SPACING;
+
+	int (*chunks)[2];
+};
+
+#define BYTES_PER_GLYPH(f) ((f->ROWS * f->COLS_STORAGE + 7) / 8)
 
 #include <stdint.h>
 extern uint8_t *__display_buf;
@@ -52,6 +63,6 @@ extern uint8_t *__display_buf;
 #define INDICATOR_BATTERY   4
 #define INDICATOR_WAIT      5
 
-const char *bitmap_blit(const char *text);
+const char *bitmap_blit(const char *text, struct font *f);
 
 #endif
