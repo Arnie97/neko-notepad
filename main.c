@@ -34,8 +34,7 @@ event_handler(unsigned row, unsigned col)
 {
 	// [APLET], [HOME]
 	if (row == 0 && (col == 7 || col == 4) || row == 6 && col == 6) {
-		// exit immediately
-		return 27;
+		exit(col);
 	} else {
 		// wait until the key is released
 		set_indicator(INDICATOR_WAIT, TRUE);
@@ -156,9 +155,7 @@ note_explorer(SAT_DIR_ENTRY *init)
 	static NODE *head;
 	for (;;) {
 		int key = get_key();
-		if (key == 27) {
-			return 0;  // exit program
-		} else if ((key == 22 || key == 23) && next_page) {
+		if ((key == 22 || key == 23) && next_page) {
 			push(&head, next_page);
 			return note_explorer(next_page);  // page down
 		} else if (key == 20 || key == 21) {
@@ -200,9 +197,7 @@ note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 
 	for (;;) {
 		int key = get_key();
-		if (key == 27) {
-			return 0;  // exit program
-		} else if ((key == 22 || key == 23) && *next_page) {
+		if ((key == 22 || key == 23) && *next_page) {
 			refresh: push(&head, next_page);
 			next_page = bitmap_blit(next_page, ROM->fonts[0]);  // page down
 			set_indicator(INDICATOR_LSHIFT, head->data != buf);
