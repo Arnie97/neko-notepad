@@ -18,7 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
-#include <syscall.h>
+#include <hpconio.h>
 #include "display.h"
 
 
@@ -51,7 +51,7 @@ get_pixel_font(const uint8_t **bytes, struct font *f)
 const char *
 bitmap_blit(const char *text, struct font *f)
 {
-	SysCall(ClearLcdEntry);
+	clear_screen();
 	if (*text == '\n') {
 		text++;  // omit line breaks between pages
 	}

@@ -19,7 +19,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include <saturn.h>
-#include <syscall.h>
 #include <hpconio.h>
 #include <hpstring.h>
 #include "hp39kbd.h"
@@ -31,7 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 int
 main(void)
 {
-	SysCall(ClearLcdEntry);
+	clear_screen();
 	if (ROM->magic != 0xC0DEBA5E) {
 		const char *rom_not_found = (
 			"\x08\xa1\x40\x01\x82\x12\x08\x00\x20\x80\x00"
