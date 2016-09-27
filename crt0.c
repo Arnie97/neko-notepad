@@ -58,7 +58,7 @@ _start(void)
 
 	// will return 0 when exitting
 	if (_exit_save((unsigned *)state_buffer)) {
-		note_explorer(NULL);
+		main();
 		__exit_cleanup();
 	}
 

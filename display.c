@@ -18,9 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
-#include <stdint.h>
 #include <syscall.h>
-#include <hpstring.h>
 #include "display.h"
 
 
@@ -50,36 +48,11 @@ get_pixel_font(const uint8_t **bytes, struct font *f)
 }
 
 
-int
-font_not_found(void)
-{
-	if (ROM->magic == 0xC0DEBA5E) {
-		return 0;
-	}
-	const char *msg = (
-		"\x08\xa1\x40\x01\x82\x12\x08\x00\x20\x80\x00"
-		"\xd0\xa7\xcf\xcf\x3f\x7f\x08\x10\xfc\xf3\x87"
-		"\x00\x51\x2a\x41\xa0\x12\x7f\xfe\x04\x92\x80"
-		"\xd8\x27\x07\x01\x82\x7f\x49\x44\xf8\xf0\x87"
-		"\x90\xa2\xea\xdf\x3f\x04\x49\x28\x40\x50\x81"
-		"\x90\x43\x80\x02\x09\x2b\x7f\x10\xfc\xf3\x87"
-		"\xb0\xa2\x4a\x12\x86\x12\x08\x28\x20\x10\x01"
-		"\x90\xd2\x2b\x9e\x19\x66\x08\xc6\x30\x08\x81"
-	);
-	for (int row = 0; row < 8; row++) {
-		memcpy(&__display_buf[(row + 18) * BYTES_PER_ROW], &msg[row * 11], 11);
-	}
-	return 1;
-}
-
-
 const char *
 bitmap_blit(const char *text, struct font *f)
 {
 	SysCall(ClearLcdEntry);
-	if (font_not_found()) {
-		return text;
-	} else if (*text == '\n') {
+	if (*text == '\n') {
 		text++;  // omit line breaks between pages
 	}
 	int x = f->LEFT_MARGIN, y = f->TOP_MARGIN;

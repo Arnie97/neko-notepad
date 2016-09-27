@@ -20,13 +20,49 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <saturn.h>
 #include <syscall.h>
-#include <hpstdio.h>
 #include <hpconio.h>
 #include <hpstring.h>
 #include "hp39kbd.h"
 #include "stack.h"
 #include "display.h"
 #include "main.h"
+
+
+int
+main(void)
+{
+	SysCall(ClearLcdEntry);
+	if (ROM->magic != 0xC0DEBA5E) {
+		const char *rom_not_found = (
+			"\x08\xa1\x40\x01\x82\x12\x08\x00\x20\x80\x00"
+			"\xd0\xa7\xcf\xcf\x3f\x7f\x08\x10\xfc\xf3\x87"
+			"\x00\x51\x2a\x41\xa0\x12\x7f\xfe\x04\x92\x80"
+			"\xd8\x27\x07\x01\x82\x7f\x49\x44\xf8\xf0\x87"
+			"\x90\xa2\xea\xdf\x3f\x04\x49\x28\x40\x50\x81"
+			"\x90\x43\x80\x02\x09\x2b\x7f\x10\xfc\xf3\x87"
+			"\xb0\xa2\x4a\x12\x86\x12\x08\x28\x20\x10\x01"
+			"\x90\xd2\x2b\x9e\x19\x66\x08\xc6\x30\x08\x81"
+		);
+		for (int row = 0; row < 8; row++) {
+			memcpy(
+				&__display_buf[(row + 18) * BYTES_PER_ROW],
+				&rom_not_found[row * 11], 11
+			);
+		}
+	} else if (hash(SERIAL_NO) != VALID_HASH) {
+		char *msg = sys_chkptr(malloc(
+			strlen(ROM->anti_piracy) + strlen(SERIAL_NO) + 1
+		));
+		strcpy(msg, ROM->anti_piracy);
+		strcat(msg, SERIAL_NO);
+		bitmap_blit(msg, ROM->fonts[0]);
+	} else {
+		return note_explorer(NULL);
+	}
+	for (;;) {
+		get_key();
+	}
+}
 
 
 int
@@ -180,16 +216,7 @@ note_explorer(SAT_DIR_ENTRY *init)
 int
 note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 {
-	char *buf;
-	if (hash(SERIAL_NO) != VALID_HASH) {
-		buf = sys_chkptr(malloc(
-			strlen(ROM->anti_piracy) + strlen(SERIAL_NO) + 1
-		));
-		strcpy(buf, ROM->anti_piracy);
-		strcat(buf, SERIAL_NO);
-	} else {
-		buf = sat_strdup(obj->addr);
-	}
+	char *buf = sat_strdup(obj->addr);
 
 	NODE *head = NULL;
 	const char *next_page = buf;
