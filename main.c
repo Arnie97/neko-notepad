@@ -27,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "display.h"
 #include "main.h"
 
+static unsigned font_id;
+
 
 int
 main(void)
@@ -73,7 +75,7 @@ main(void)
 int
 event_handler(unsigned row, unsigned col)
 {
-	// [APLET], [HOME]
+	// [APLET], [HOME], [ON]
 	if (row == 0 && (col == 7 || col == 4) || row == 6 && col == 6) {
 		exit(col);
 	} else {
@@ -84,10 +86,8 @@ event_handler(unsigned row, unsigned col)
 	}
 
 	// [UP]: 0, [LEFT]: 1, [DOWN]: 2, [RIGHT]: 3
-	if (col == 6) {
-		return row + 20;
-	} else if (row == 1 && col == 7) {
-		return 28;  // [VIEWS]
+	if (5 <= col && col <= 7) {
+		return (col - 4) * 10 + row;
 	} else if (3 <= row && row <= 5 && 1 <= col && col <= 3) {
 		return (6 - row) * 3 - col + 1;
 	}
@@ -119,11 +119,13 @@ display_title(const char *str)
 	for (int i = 0; i < 6; i++) {
 		set_indicator(i, FALSE);
 	}
+
+	putchar('\n');
 }
 
 
 void
-display_item(unsigned count, SAT_OBJ_DSCR *obj)
+display_count(unsigned count, const char *name)
 {
 	putchar(' ');
 	putchar(' ');
@@ -132,14 +134,19 @@ display_item(unsigned count, SAT_OBJ_DSCR *obj)
 	putchar(']');
 	putchar(' ');
 
-	char *name = obj->name + 1;
 	while (*name) {
 		putchar(*name++);
 	}
+}
 
+
+void
+display_item(unsigned count, SAT_OBJ_DSCR *obj)
+{
+	display_count(count, obj->name + 1);
 	char buf[7];
 	utoa(sat_strlen(obj->addr), buf, 10);
-	for (unsigned i = obj->name - name - strlen(buf) + 26; i > 0; i--) {
+	for (unsigned i = 26 - strlen(obj->name) - strlen(buf); i > 0; i--) {
 		putchar(' ');
 	}
 	puts(buf);
@@ -150,7 +157,6 @@ int
 note_explorer(SAT_DIR_ENTRY *init)
 {
 	display_title("Neko Notepad");
-	putchar('\n');
 
 	if (!init) {
 		SAT_DIR_NODE *dir = _sat_find_path("/'notesdir");
@@ -185,6 +191,8 @@ note_explorer(SAT_DIR_ENTRY *init)
 		} else if (key == 20 || key == 21) {
 			pop(&head);
 			return note_explorer(pop(&head));  // page up
+		} else if (key == 31) {
+			return font_config(head? head->data: NULL);
 		} else if (1 <= key && key <= count) {
 			for (SAT_DIR_ENTRY *entry = init; entry; entry = entry->next) {
 				SAT_OBJ_DSCR *obj = entry->sat_obj;
@@ -212,7 +220,7 @@ note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 		int key = get_key();
 		if ((key == 22 || key == 23) && str.cursor != str.end) {
 			refresh: push(&head, str.cursor);
-			bitmap_blit(&str, ROM->fonts[0]);  // page down
+			bitmap_blit(&str, ROM->fonts[font_id]);  // page down
 			set_indicator(INDICATOR_LSHIFT, head->data != str.begin);
 		} else if (key == 20 || key == 21) {
 			pop(&head);
@@ -221,10 +229,35 @@ note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 				str.cursor = str.begin;
 			}
 			goto refresh;
-		} else if (key == 28) {
+		} else if (key == 16) {  // [SYMB]
 			while (head) {
 				pop(&head);
 			}
+			return note_explorer(ref);  // go back to the list
+		}
+	}
+}
+
+
+int
+font_config(SAT_DIR_ENTRY *ref)
+{
+	display_title("Select font size");
+
+	int count = 0;
+	while (ROM->fonts[count]) {
+		char buf[3];
+		utoa(ROM->fonts[count]->ROWS, buf, 10);
+		display_count(++count, buf);
+		puts(" px font");
+	}
+	for (;;) {
+		int key = get_key();
+		if (1 <= key && key <= count) {
+			font_id = key - 1;
+			key = 16;
+		}
+		if (key == 16 || key == 31) {  // [SYMB], [VIEWS]
 			return note_explorer(ref);  // go back to the list
 		}
 	}
