@@ -184,12 +184,12 @@ int
 note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 {
 	char *buf;
-	if (hash(ROM->serial_no) != VALID_HASH) {
+	if (hash(SERIAL_NO) != VALID_HASH) {
 		buf = sys_chkptr(malloc(
-			strlen(ROM->anti_piracy) + strlen(ROM->serial_no) + 1
+			strlen(ROM->anti_piracy) + strlen(SERIAL_NO) + 1
 		));
 		strcpy(buf, ROM->anti_piracy);
-		strcat(buf, ROM->serial_no);
+		strcat(buf, SERIAL_NO);
 	} else {
 		buf = sat_strdup(obj->addr);
 	}
