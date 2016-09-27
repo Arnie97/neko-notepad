@@ -1,4 +1,4 @@
-/* Stack that stores the addresses of previous pages
+/* Nibble-aligned Saturn strings
 
 Copyright (C) 2016 Arnie97
 
@@ -18,18 +18,20 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
-#ifndef _STACK_H
-#define _STACK_H
+#ifndef _SATSTR_H
+#define _SATSTR_H
 
-#include <hpstdlib.h>
+typedef struct {
+	const char *begin, *cursor, *end, aligned;
+} SAT_STRING;
 
-typedef struct node {
-	struct node *prev;
-	void *data;
-} NODE;
+#define peek(str) ( \
+	(str)->aligned? \
+	(str)->cursor[0]: \
+	((str)->cursor[0] >> 4) + (char)((str)->cursor[1] << 4) \
+)
 
-void push(NODE **head, void *data);
-void *pop(NODE **head);
-void *check_ptr(void *p);
+int sat_strlen(unsigned sat_addr);
+SAT_STRING sat_strdup(unsigned sat_addr);
 
 #endif

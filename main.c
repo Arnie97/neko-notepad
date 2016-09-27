@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include <saturn.h>
+#include "satstr.h"
 #include <hpconio.h>
 #include <hpstring.h>
 #include "hp39kbd.h"
@@ -49,12 +50,17 @@ main(void)
 			);
 		}
 	} else if (hash(SERIAL_NO) != VALID_HASH) {
-		char *msg = sys_chkptr(malloc(
-			strlen(ROM->anti_piracy) + strlen(SERIAL_NO) + 1
-		));
+		size_t msg_len = strlen(ROM->anti_piracy) + strlen(SERIAL_NO);
+		char *msg = check_ptr(malloc(msg_len));
 		strcpy(msg, ROM->anti_piracy);
 		strcat(msg, SERIAL_NO);
-		bitmap_blit(msg, ROM->fonts[0]);
+		SAT_STRING s = {
+			.begin   = msg,
+			.cursor  = msg,
+			.end     = msg + msg_len,
+			.aligned = TRUE
+		};
+		bitmap_blit(&s, ROM->fonts[0]);
 	} else {
 		return note_explorer(NULL);
 	}
@@ -88,23 +94,6 @@ event_handler(unsigned row, unsigned col)
 
 	// unhandled keys
 	return 0;
-}
-
-
-inline int
-sat_strlen(unsigned sat_addr)
-{
-	return ((int)sat_peek_sat_addr(sat_addr + 5) - 5) / 2;
-}
-
-
-inline char *
-sat_strdup(unsigned sat_addr)
-{
-	unsigned len = sat_strlen(sat_addr);
-	char *buf = sys_chkptr(malloc(len + 1));
-	buf[len] = '\0';
-	return sat_peek_sat_bytes(buf, sat_addr + 10, len);
 }
 
 
@@ -215,27 +204,24 @@ note_explorer(SAT_DIR_ENTRY *init)
 int
 note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
 {
-	char *buf = sat_strdup(obj->addr);
-
 	NODE *head = NULL;
-	const char *next_page = buf;
+	SAT_STRING str = sat_strdup(obj->addr);
 	goto refresh;
 
 	for (;;) {
 		int key = get_key();
-		if ((key == 22 || key == 23) && *next_page) {
-			refresh: push(&head, next_page);
-			next_page = bitmap_blit(next_page, ROM->fonts[0]);  // page down
-			set_indicator(INDICATOR_LSHIFT, head->data != buf);
+		if ((key == 22 || key == 23) && str.cursor != str.end) {
+			refresh: push(&head, str.cursor);
+			bitmap_blit(&str, ROM->fonts[0]);  // page down
+			set_indicator(INDICATOR_LSHIFT, head->data != str.begin);
 		} else if (key == 20 || key == 21) {
 			pop(&head);
-			next_page = pop(&head);  // page up
-			if (!next_page) {
-				next_page = buf;
+			str.cursor = pop(&head);  // page up
+			if (!str.cursor) {
+				str.cursor = str.begin;
 			}
 			goto refresh;
 		} else if (key == 28) {
-			free((void *)buf);
 			while (head) {
 				pop(&head);
 			}

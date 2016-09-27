@@ -18,21 +18,23 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
+#include "satstr.h"
 #include <hpconio.h>
+#include "stack.h"
 #include "display.h"
 
 
 void *
-get_pixel_font(const uint8_t **bytes, struct font *f)
+get_pixel_font(SAT_STRING *str, struct font *f)
 {
-	int page = 0[*bytes] - 0xA0;  // 区码
-	int id   = 1[*bytes] - 0xA0;  // 位码
+	int page = peek(str) - 0xA0;  // 区码
+	str->cursor++;
+	int id   = peek(str) - 0xA0;  // 位码
 	if (page < 0) {               // ISO/IEC 2022 G0区
-	    page = 3;                 // 用 GB 2312-1980 第3区中
-	    id = 0[*bytes] - ' ';     // 相应的全角字符代替半角字符
-	    *bytes += 1;              // 半角字符，指针移动一字节
+		id = page + 0xA0 - ' ';   // 用相应的全角字符代替半角字符
+		page = 3;                 // 这些全角字符在 GB 2312-1980 第3区
 	} else {                      // ISO/IEC 2022 GR区
-	    *bytes += 2;              // 全角字符，指针移动两字节
+		str->cursor++;            // 全角字符，指针需移动两字节
 	}
 
 	size_t code_point = ((page - 1) * 94 + (id - 1));
@@ -45,32 +47,33 @@ get_pixel_font(const uint8_t **bytes, struct font *f)
 			return (void *)code_point;
 		}
 	}
+	return NULL;
 }
 
 
-const char *
-bitmap_blit(const char *text, struct font *f)
+void
+bitmap_blit(SAT_STRING *str, struct font *f)
 {
 	clear_screen();
-	if (*text == '\n') {
-		text++;  // omit line breaks between pages
+	if (peek(str) == '\n') {
+		str->cursor++;  // omit line breaks between pages
 	}
 	int x = f->LEFT_MARGIN, y = f->TOP_MARGIN;
 
 	// go through the text
-	while (*text) {
-		if (*text == '\n') {
-			text++;
+	while (str->cursor != str->end) {
+		if (peek(str) == '\n') {
+			str->cursor++;
 			x = SCREEN_WIDTH;
 			y += f->ROWS;
 			goto next;
 		}
 
 		// get the pixel font of current glyph
-		uint8_t pos = 7, *ptr = get_pixel_font((const uint8_t **)&text, f);
+		uint8_t *ptr = check_ptr(get_pixel_font(str, f));
 
 		// draw the glyph
-		for (size_t row = 0; row < f->ROWS; row++, y++) {
+		for (size_t row = 0, pos = 7; row < f->ROWS; row++, y++) {
 			for (size_t col = 0; col < f->COLS_STORAGE; col++, x++) {
 
 				// fill the pixels bit by bit
@@ -98,6 +101,5 @@ bitmap_blit(const char *text, struct font *f)
 			break;
 		}
 	}
-	set_indicator(INDICATOR_RSHIFT, *text);
-	return text;
+	set_indicator(INDICATOR_RSHIFT, str->cursor != str->end);
 }

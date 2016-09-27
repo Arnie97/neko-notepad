@@ -18,13 +18,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 */
 
+#include <hpconio.h>
+#include "hp39kbd.h"
 #include "stack.h"
 
 
 void
 push(NODE **head, void *data)
 {
-	NODE *n = sys_chkptr(malloc(sizeof(NODE)));
+	NODE *n = check_ptr(malloc(sizeof(NODE)));
 	n->prev = *head;
 	n->data = data;
 	*head = n;
@@ -42,4 +44,17 @@ pop(NODE **head)
 	*head = (*head)->prev;
 	free(n);
 	return data;
+}
+
+
+void *
+check_ptr(void *p)
+{
+	if (p) {
+		return p;
+	}
+	puts("Null Pointer!");
+	for (;;) {
+		get_key();
+	}
 }

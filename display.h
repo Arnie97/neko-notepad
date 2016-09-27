@@ -65,6 +65,7 @@ extern uint8_t *__display_buf;
 #define INDICATOR_BATTERY   4
 #define INDICATOR_WAIT      5
 
-const char *bitmap_blit(const char *text, struct font *f);
+#include "satstr.h"
+void bitmap_blit(SAT_STRING *str, struct font *f);
 
 #endif
