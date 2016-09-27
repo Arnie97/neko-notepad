@@ -32,7 +32,7 @@ sat_strlen(unsigned sat_addr)
 SAT_STRING
 sat_strdup(unsigned sat_addr)
 {
-	unsigned arm_addr = sat_map_s2a(sat_addr + 10);
+	const char *arm_addr = sat_map_s2a(sat_addr + 10);
 	SAT_STRING str = {
 		.begin   = arm_addr,
 		.cursor  = arm_addr,

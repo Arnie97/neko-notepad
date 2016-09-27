@@ -22,7 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <hpsys.h>
 #include "main.h"
 
-extern unsigned int *__exit_stk_state;
+extern int *__exit_stk_state;
 extern int _exit_save(unsigned int *ptr);
 extern void __exit_cleanup();
 
@@ -44,7 +44,7 @@ _start(void)
 	__scr_h = 11;
 
 	// declare locally to reduce executable size
-	unsigned state_buffer[4], lcd_buffer[17];
+	int state_buffer[4], lcd_buffer[17];
 	__exit_stk_state = state_buffer;
 
 	// turn interrupts off so we can use the screen

@@ -27,14 +27,13 @@ INC ?= "$(HPGCC)\include"
 LIB ?= "$(HPGCC)\lib"
 
 
-CFLAGS ?= -std=c99 -Wall -Os -I$(INC) -L$(LIB) \
-	-mtune=arm920t -mcpu=arm920t -mlittle-endian -fomit-frame-pointer
+CFLAGS ?= -std=c99 -Wall -Os -I$(INC) -L$(LIB) -fomit-frame-pointer \
+	-mtune=arm920t -mcpu=arm920t -mlittle-endian -msoft-float
 
-crt0.o: CFLAGS += -msingle-pic-base -fpic -mpic-register=r10 -msoft-float
+crt0.o: CFLAGS += -msingle-pic-base -fpic -mpic-register=r10
 main.o: CFLAGS += -DVALID_HASH=$(shell $(KEYGEN) $(SN))
 
-LDFLAGS := -L$(LIB) -T MMUld.script \
-	-lwin -lggl -lhpg -lhplib -lgcc
+LDFLAGS := -L$(LIB) -T MMUld.script -lhplib -lgcc
 
 
 all: believe hp39dir.000
