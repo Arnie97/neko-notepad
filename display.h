@@ -27,7 +27,7 @@ struct rom {
 	const char *anti_piracy;
 };
 
-#define ROM             ((struct rom *)0x3FF00)
+#define ROM             ((struct rom *)0x1FEFE0)
 #define SERIAL_NO       ((const char *)0x3FF0)
 #define SCREEN_WIDTH    131
 #define SCREEN_HEIGHT   (*(int *)0x0730000c >> 8)
