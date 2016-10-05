@@ -143,7 +143,7 @@ display_count(unsigned count, const char *name)
 void
 display_item(unsigned count, SAT_OBJ_DSCR *obj)
 {
-	display_count(count, obj->name + 1);
+	display_count(count, obj->name + (obj->name[0] == '\''));
 	char buf[7];
 	utoa(sat_strlen(obj->addr), buf, 10);
 	for (unsigned i = 26 - strlen(obj->name) - strlen(buf); i > 0; i--) {
