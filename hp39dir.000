@@ -1,1 +1,6 @@
-HP39AscA B 16 neko_notepad.apt12 Neko Notepad C 10 readme.txt7 Read Me H 10 lib275.sys7 LIB275L
+HP39AscA
+B 16 neko_notepad.apt 12 Neko Notepad
+H 10 lib275.sys        7 LIB275L
+
+C 10 readme.txt       14 Read Me (39gs)
+C 15 readme_40gs.txt  14 Read Me (40gs)
