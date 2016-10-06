@@ -22,10 +22,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "satstr.h"
 
 
-inline int
+int
 sat_strlen(unsigned sat_addr)
 {
-	return ((int)sat_peek_sat_addr(sat_addr + 5) - 5) / 2;
+	return sat_peek_sat_addr(sat_addr) == SAT_DOCSTR?
+		((int)sat_peek_sat_addr(sat_addr + 5) - 5) / 2: -1;
 }
 
 

@@ -143,10 +143,11 @@ display_count(unsigned count, const char *name)
 void
 display_item(unsigned count, SAT_OBJ_DSCR *obj)
 {
-	display_count(count, obj->name + (obj->name[0] == '\''));
+	const char *name = obj->name + (obj->name[0] == '\'');
+	display_count(count, name);
 	char buf[7];
 	utoa(sat_strlen(obj->addr), buf, 10);
-	for (unsigned i = 26 - strlen(obj->name) - strlen(buf); i > 0; i--) {
+	for (unsigned i = 26 - strlen(name) - strlen(buf); i > 0; i--) {
 		putchar(' ');
 	}
 	puts(buf);
@@ -159,25 +160,28 @@ note_explorer(SAT_DIR_ENTRY *init)
 	display_title("Neko Notepad");
 
 	if (!init) {
-		SAT_DIR_NODE *dir = _sat_find_path("/'notesdir");
-		init = dir->object;
+		__sat_cwd = _sat_find_path("/'notesdir");
+		if (!__sat_cwd) {
+			__sat_cwd = __sat_root;
+		}
+		init = __sat_cwd->object;
 	} else {
 		set_indicator(INDICATOR_LSHIFT, TRUE);
 	}
 
-	unsigned count = 0;
+	unsigned count = 0, entries[9];
 	SAT_DIR_ENTRY *next_page = NULL;
 	for (SAT_DIR_ENTRY *entry = init; entry; entry = entry->next) {
 		SAT_OBJ_DSCR *obj = entry->sat_obj;
-		if (obj->name[0] == ';') {
+		if (sat_strlen(obj->addr) < 0) {
 			continue;
-		}
-		if (count == 8) {
+		} else if (count == 8) {
 			next_page = entry;
 			set_indicator(INDICATOR_RSHIFT, TRUE);
 			break;
 		}
 		count++;
+		entries[count] = obj->addr;
 		display_item(count, obj);
 	}
 	gotoxy(0, 9);
@@ -194,26 +198,17 @@ note_explorer(SAT_DIR_ENTRY *init)
 		} else if (key == 31) {
 			return font_config(head? head->data: NULL);
 		} else if (1 <= key && key <= count) {
-			for (SAT_DIR_ENTRY *entry = init; entry; entry = entry->next) {
-				SAT_OBJ_DSCR *obj = entry->sat_obj;
-				if (obj->name[0] == ';') {
-					continue;
-				}
-				key--;
-				if (!key) {
-					return note_viewer(obj, head? head->data: NULL);
-				}
-			}
+			return note_viewer(entries[key], head? head->data: NULL);
 		}
 	}
 }
 
 
 int
-note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref)
+note_viewer(unsigned sat_addr, SAT_DIR_ENTRY *ref)
 {
 	NODE *head = NULL;
-	SAT_STRING str = sat_strdup(obj->addr);
+	SAT_STRING str = sat_strdup(sat_addr);
 	goto refresh;
 
 	for (;;) {
