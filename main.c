@@ -88,8 +88,10 @@ event_handler(unsigned row, unsigned col)
 	// [UP]: 0, [LEFT]: 1, [DOWN]: 2, [RIGHT]: 3
 	if (5 <= col && col <= 7) {
 		return (col - 4) * 10 + row;
-	} else if (3 <= row && row <= 5 && 1 <= col && col <= 3) {
-		return (6 - row) * 3 - col + 1;
+	} else if (3 <= row && row <= 5 && col <= 3) {
+		return col?
+			(6 - row) * 3 - col + 1:  // number keys
+			row + 17;  // [-]: [UP], [+]: [DOWN]
 	}
 
 	// unhandled keys
