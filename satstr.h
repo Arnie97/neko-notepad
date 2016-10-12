@@ -26,6 +26,7 @@ typedef struct {
 } SAT_STRING;
 
 #define peek(str) ( \
+	(str)->cursor >= (str)->end? ',': \
 	(str)->aligned? \
 	(str)->cursor[0]: \
 	((str)->cursor[0] >> 4) + (char)((str)->cursor[1] << 4) \

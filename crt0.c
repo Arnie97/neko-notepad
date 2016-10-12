@@ -53,17 +53,13 @@ _start(void)
 	// save current hardware state
 	sys_lcdsave(lcd_buffer);
 
-	// slow down the clock to save power
-	sys_slowOn();
-
 	// will return 0 when exitting
 	if (_exit_save((unsigned *)state_buffer)) {
-		main();
+		note_explorer(NULL);
 		__exit_cleanup();
 	}
 
 	// restore original hardware values
-	sys_slowOff();
 	sys_lcdrestore(lcd_buffer);
 
 	// turn interrupts on for the OS

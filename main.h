@@ -27,8 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 int main(void);
 int event_handler(unsigned row, unsigned col);
 int note_explorer(SAT_DIR_ENTRY *init);
-int note_viewer(unsigned sat_addr, SAT_DIR_ENTRY *ref);
-int font_config(SAT_DIR_ENTRY *ref);
+int note_viewer(SAT_OBJ_DSCR *obj, SAT_DIR_ENTRY *ref);
 
 uint16_t hash(const char *str);
 
