@@ -28,4 +28,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define GPGCON ((unsigned *)0x07A00060)
 #define GPGDAT ((unsigned *)0x07A00064)
 
+#define on_pressed (*GPFDAT & 1)
+
 #endif

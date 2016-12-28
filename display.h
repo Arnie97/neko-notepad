@@ -21,33 +21,22 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
+#include <stdint.h>
+
 struct rom {
 	int magic;
-	struct font **fonts;
-	const char *anti_piracy;
+	uint8_t *beg, *end;
 };
 
 #define ROM             ((struct rom *)0x1FEFE0)
 #define SERIAL_NO       ((const char *)0x3FF0)
 #define SCREEN_WIDTH    131
-#define SCREEN_HEIGHT   (*(int *)0x0730000c >> 8)
+#define SCREEN_HEIGHT   64
 #define BYTES_PER_ROW   20
 
-struct font {
-	char ROWS;
-	char COLS_STORAGE;
-	char COLS_REAL;
+#define WIDTH_IN_BYTES  (96 / 8)
+#define LEFT_MARGIN     (16 / 8)
 
-	char LEFT_MARGIN;
-	char TOP_MARGIN;
-	char LINE_SPACING;
-
-	int (*chunks)[2];
-};
-
-#define BYTES_PER_GLYPH(f) ((f->ROWS * f->COLS_STORAGE + 7) / 8)
-
-#include <stdint.h>
 extern uint8_t *__display_buf;
 
 #define indicator(n) __display_buf[BYTES_PER_ROW * (n) + (SCREEN_WIDTH >> 3)]
@@ -64,8 +53,5 @@ extern uint8_t *__display_buf;
 #define INDICATOR_ALPHA     3
 #define INDICATOR_BATTERY   4
 #define INDICATOR_WAIT      5
-
-#include "satstr.h"
-void bitmap_blit(SAT_STRING *str, struct font *f);
 
 #endif

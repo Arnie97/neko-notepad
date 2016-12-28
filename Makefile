@@ -19,9 +19,8 @@ LD := $(TARGET)-ld
 
 ELF2HP ?= elf2hp
 HP2APT ?= ./hp2aplet
-KEYGEN ?= ./keygen
 
-SRC ?= $(wildcard *.c)
+SRC ?= crt0.c display.c
 OBJ ?= $(SRC:%.c=%.o)
 INC ?= "$(HPGCC)\include"
 LIB ?= "$(HPGCC)\lib"
@@ -31,20 +30,19 @@ CFLAGS ?= -std=c99 -Wall -Os -I$(INC) -L$(LIB) -fomit-frame-pointer \
 	-mtune=arm920t -mcpu=arm920t -mlittle-endian -msoft-float
 
 crt0.o: CFLAGS += -msingle-pic-base -fpic -mpic-register=r10
-main.o: CFLAGS += -DVALID_HASH=$(shell $(KEYGEN) $(SN))
 
 LDFLAGS := -L$(LIB) -T MMUld.script -lhplib -lgcc
 
 
 all: believe hp39dir.000
 
-believe: neko_notepad.apt
+believe: neko_video.apt
 
 clean:
 	rm *.o *.elf *.hp
 
 %.apt: %.hp
-	$(HP2APT) $< $@ "Neko Notepad"
+	$(HP2APT) $< $@ "Neko Video"
 
 %.hp: %.elf
 	$(ELF2HP) $< $@

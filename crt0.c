@@ -20,7 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include <hpsys.h>
-#include "main.h"
+int main(void);
 
 extern int *__exit_stk_state;
 extern int _exit_save(unsigned int *ptr);
@@ -38,10 +38,6 @@ _start(void)
 	// and the buffer is in the 4kb SRAM
 	volatile unsigned *LCDSADDR1 = (unsigned *)0x7300014;
 	__display_buf = (*LCDSADDR1 & 0xffff) * 2 + 0x7f00000;
-
-	// set the screen height for the <hpstdio.h> module
-	extern int __scr_h;
-	__scr_h = 11;
 
 	// declare locally to reduce executable size
 	int state_buffer[4], lcd_buffer[17];
