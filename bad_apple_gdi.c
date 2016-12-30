@@ -15,7 +15,15 @@ struct node_t {
 	struct node_t *lchild, *rchild;
 };
 
+struct node_dump_t {
+	uint16_t leaf: 1;
+	uint16_t data: 9;
+} pool[511];
+
+uint16_t pool_size;
+
 typedef struct node_t node_t;
+typedef struct node_dump_t node_dump_t;
 typedef const char *file_name_t;
 
 void heap_push(node_t *);
@@ -173,14 +181,30 @@ create_node(uint8_t byte, size_t weight, node_t *lchild, node_t *rchild)
 void
 huffman_code(node_t *n, char *buf, size_t len)
 {
+	node_dump_t *self = &pool[pool_size++];
 	if (!n->lchild || !n->rchild) {
-		// leaf node, copy huffman coding to alphabet
+		// leaf node, record character type
+		*self = (node_dump_t){
+			.leaf = TRUE,
+			.data = n->byte
+		};
+
+		// copy huffman coding to alphabet
 		alphabet[n->byte].code = alloc(len + 1);
 		buf[len] = '\0';
 		strcpy(alphabet[n->byte].code, buf);
 	} else {
-		// visit child nodes recursively
+		// parent node, visit child nodes recursively
+		// the left child must be located at *(self + 1) during a
+		// preorder traversal, so doesn't need to be recorded
 		buf[len] = '0'; huffman_code(n->lchild, buf, len + 1);
+
+		// record right child
+		*self = (node_dump_t){
+			.leaf = FALSE,
+			.data = pool_size - (self - pool)
+		};
+
 		buf[len] = '1'; huffman_code(n->rchild, buf, len + 1);
 	}
 	free(n);
@@ -210,7 +234,7 @@ generate_huffman_coding(uint8_t *buf, size_t len)
 	}
 
 	// generate huffman coding by preorder traversal
-	// and destroy the huffman tree by the way
+	// and serialize the huffman tree by the way
 	char *huffman_code_buf = alloc(count);
 	huffman_code(q.data[1], huffman_code_buf, 0);
 	free(huffman_code_buf);
@@ -224,12 +248,20 @@ huffman_compress(file_name_t intermediate, file_name_t output)
 {
 	uint8_t *buf;
 	size_t len = load_file(intermediate, &buf);
-
 	uint8_t count = generate_huffman_coding(buf, len);
+	FILE *fp = fopen(output, "wb");
+
+	// write the magic number
+	fputs("\xBA\xDA\x99\x1E", fp);
+
+	// write the serialized huffman tree
+	fwrite(&pool_size, sizeof(uint16_t), 1, fp);
+	fwrite(pool, sizeof(*pool), pool_size, fp);
+
+	// write the encoded data
 	char *output_buf = alloc(count + 8);
 	output_buf[0] = '\0';
 
-	FILE *fp = fopen(output, "wb");
 	for (uint8_t *p = buf; p < buf + len; p++) {
 		// append huffman coding of the next character
 		strcat(output_buf, alphabet[*p].code);
@@ -291,43 +323,68 @@ draw(HDC hDC, const uint8_t *buf)
 
 
 void
-test_result(file_name_t output, HDC hDC)
+yield(uint8_t data, HDC hDC)
+{
+	static int row = -1, byte = -1;
+	if (byte >= 0) {
+		frame[row][byte] = data;
+		byte = -1;
+		return;
+	}
+	if (data != 0xFF) {
+		byte = data & 0x7F;
+	}
+	if (data & 0x80) {
+		row++;
+		if (row == HEIGHT) {
+			row = 0;
+			draw(hDC, (uint8_t *)frame);
+		}
+	}
+}
+
+
+void
+test_compressed_file(file_name_t output, HDC hDC)
 {
 	uint8_t *buf;
 	size_t len = load_file(output, &buf);
 	memset(frame, 0x00, HEIGHT * WIDTH_IN_BYTES);
 
-	for (int row = -1, i = 0; i < len; i++) {
-		if (buf[i] & 0x80) {
-			row++;
-			if (row == 64) {
-				row = 0;
-				draw(hDC, (uint8_t *)frame);
+	// skip magic number
+	uint16_t pool_size = *(uint16_t *)(buf + 4);
+	node_dump_t *tree = (node_dump_t *)(buf + 4 + sizeof(uint16_t)), *node = tree;
+	for (uint8_t *p = (uint8_t *)tree + pool_size * sizeof(node_dump_t); p < buf + len; p++) {
+		uint8_t byte = *p;
+		for (int j = 0; j < 8; j++) {
+			node += (byte & 0x80? node->data: 1);
+			if (node->leaf) {
+				yield(node->data, hDC);
+				node = tree;
 			}
-		}
-		if (buf[i] != 0xFF) {
-			uint8_t byte = buf[i] & 0x7F;
-			frame[row][byte] = buf[++i];
+			byte <<= 1;
 		}
 	}
+	free(buf);
 }
 
 
 int
 main(int argc, char *argv[])
 {
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s [input] [intermediate] [output]\n", argv[0]);
+	if (argc != 2 && argc != 4) {
+		fprintf(stderr, "Usage: %s [input] [intermediate] output\n", argv[0]);
 		exit(EXIT_FAILURE);
+	} else if (argc == 4) {
+		delta_compress(argv[1], argv[2]);
+		huffman_compress(argv[2], argv[3]);
 	}
-	delta_compress(argv[1], argv[2]);
-	huffman_compress(argv[2], argv[3]);
 
 	HWND hWnd = FindWindow("Notepad", NULL);
 	if (hWnd) {
 		// if notepad is found, play the compressed video in it
 		HDC hDC = GetDC(hWnd);
-		test_result(argv[3], hDC);
+		test_compressed_file(argv[argc - 1], hDC);
 		ReleaseDC(hWnd, hDC);
 	}
 }
