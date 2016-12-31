@@ -20,6 +20,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include <hpsys.h>
+#include <saturn.h>
+
 int main(void);
 
 extern int *__exit_stk_state;
@@ -52,11 +54,17 @@ _start(void)
 	// slow down the clock to save power
 	sys_slowOn();
 
+	// initialize RPL stack access
+	unsigned rpl_stack_bias = sat_stack_init();
+
 	// will return 0 when exitting
 	if (_exit_save((unsigned *)state_buffer)) {
 		main();
 		__exit_cleanup();
 	}
+
+	// finalize RPL stack access
+	sat_stack_exit(rpl_stack_bias);
 
 	// restore original hardware values
 	sys_slowOff();

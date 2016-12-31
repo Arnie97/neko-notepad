@@ -20,10 +20,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <stdint.h>
 #include <hpstring.h>
+#include <saturn.h>
 #include "s3c2410.h"
 #include "display.h"
 
 static uint8_t frame[SCREEN_HEIGHT][WIDTH_IN_BYTES];
+static int32_t interval;
 
 
 void
@@ -36,7 +38,7 @@ draw(uint8_t *frame)
 			WIDTH_IN_BYTES
 		);
 	}
-	delay(30000);
+	delay(interval);
 }
 
 
@@ -45,6 +47,8 @@ main(void)
 {
 	if (ROM->magic != 0xBadA991e) {
 		return 1;
+	} else {
+		interval = sat_pop_zint_llong();
 	}
 
 	unsigned row = -1;
@@ -64,4 +68,5 @@ main(void)
 			frame[row][byte] = *++p;
 		}
 	}
+	while (!on_pressed);
 }
