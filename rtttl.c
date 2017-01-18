@@ -25,7 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "hp39kbd.h"
 #include "display.h"
 
-char repeat;
+char repeat, paused;
 static int default_duration = 4, default_octave = 4, bpm = 120;
 
 
@@ -41,13 +41,20 @@ beep_until_key_pressed(unsigned freq, unsigned duration, unsigned override)
 {
 	int ret = syscallArg3(beepEntry, freq, duration, override);
 	if (ret == SUCCESS) {
-		while (!SysCall(CheckBeepEndEntry)) {
-			if (shift_pressed) {
+		while (!SysCall(CheckBeepEndEntry) || paused) {
+			if (alpha_pressed) {
+				if ((paused = !paused)) {
+					gotoxy(2, 5);
+					puts("||   ");
+				}
+			} else if (shift_pressed) {
 				set_indicator(INDICATOR_REMOTE, (repeat = !repeat));
-			} else if (any_key_pressed) {
+			} else if (on_pressed) {
+				paused = FALSE;
 				SysCall(StopBeepEntry);
 				return SUCCESS + 1;
 			}
+			while (any_key_pressed);
 		}
 	}
 	return ret;
@@ -83,14 +90,13 @@ print_offset(SAT_STRING *str)
 void
 raise(SAT_STRING *str)
 {
-	gotoxy(0, 2);
-	putchar(' ');
-	putchar(' ');
+	gotoxy(2, 2);
 	puts(str->cursor >= str->end? "End of file": "Interrupted");
 	puts("  Press any key to exit\n\n  At file position:");
 	print_offset(str);
 	while (any_key_pressed);
 	while (!any_key_pressed);
+	while (any_key_pressed);
 }
 
 
@@ -166,7 +172,11 @@ begin:
 				return;
 			} else if (!note) {
 				sys_slowOn();
-				for (volatile int i = 200 * duration; i && !any_key_pressed; i--);
+				for (volatile int i = 200 * duration; i && !on_pressed; i--) {
+					if (alpha_pressed) {
+						paused = TRUE;
+					}
+				}
 				sys_slowOff();
 			}
 			str->cursor++;
