@@ -27,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "display.h"
 #include "main.h"
 
+extern char repeat;
+
 
 int
 event_handler(unsigned row, unsigned col)
@@ -46,6 +48,8 @@ event_handler(unsigned row, unsigned col)
 		return (col - 4) * 10 + row;
 	} else if (3 <= row && row <= 5 && 1 <= col && col <= 3) {
 		return (6 - row) * 3 - col + 1;
+	} else if (row == 1 && col == 4) {
+		set_indicator(INDICATOR_REMOTE, (repeat = !repeat));
 	}
 
 	// unhandled keys
@@ -72,10 +76,9 @@ display_title(const char *str)
 	while (right--) {
 		putchar('\x7f');
 	}
-	for (int i = 0; i < 6; i++) {
+	for (int i = 1; i < 6; i++) {
 		set_indicator(i, FALSE);
 	}
-
 	putchar('\n');
 }
 

@@ -30,8 +30,8 @@ get_key(void)
 	// wait until a key is pressed
 	while (!any_key_pressed);
 	// deal with the modifier keys
-	if (comma_pressed) {
-		return event_handler(3, 4);
+	if (shift_pressed) {
+		return event_handler(1, 4);
 	} else if (on_pressed) {
 		return event_handler(0, 4);
 	} else if (!any_normal_key_pressed) {

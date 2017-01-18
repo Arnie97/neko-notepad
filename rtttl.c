@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "hp39kbd.h"
 #include "display.h"
 
+char repeat;
 static int default_duration = 4, default_octave = 4, bpm = 120;
 
 
@@ -41,7 +42,9 @@ beep_until_key_pressed(unsigned freq, unsigned duration, unsigned override)
 	int ret = syscallArg3(beepEntry, freq, duration, override);
 	if (ret == SUCCESS) {
 		while (!SysCall(CheckBeepEndEntry)) {
-			if (any_key_pressed) {
+			if (shift_pressed) {
+				set_indicator(INDICATOR_REMOTE, (repeat = !repeat));
+			} else if (any_key_pressed) {
 				SysCall(StopBeepEntry);
 				return SUCCESS + 1;
 			}
@@ -105,6 +108,7 @@ melody_parser(SAT_STRING *str)
 	const char *cursor = str->cursor;
 	str->cursor = str->end;
 	print_offset(str);
+begin:
 	str->cursor = cursor;
 
 	while (TRUE) {
@@ -158,7 +162,8 @@ melody_parser(SAT_STRING *str)
 
 		if (peek(str) == ',') {
 			if (note && SUCCESS != beep_until_key_pressed(freq(note), duration, 2)) {
-				break;
+				raise(str);
+				return;
 			} else if (!note) {
 				sys_slowOn();
 				for (volatile int i = 200 * duration; i && !any_key_pressed; i--);
@@ -169,7 +174,12 @@ melody_parser(SAT_STRING *str)
 			break;
 		}
 	}
-	raise(str);
+
+	if (repeat) {
+		goto begin;
+	} else {
+		raise(str);
+	}
 }
 
 
