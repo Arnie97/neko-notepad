@@ -43,10 +43,8 @@ beep_until_key_pressed(unsigned freq, unsigned duration, unsigned override)
 	if (ret == SUCCESS) {
 		while (!SysCall(CheckBeepEndEntry) || paused) {
 			if (alpha_pressed) {
-				if ((paused = !paused)) {
-					gotoxy(2, 5);
-					puts("||   ");
-				}
+				gotoxy(1, 7);
+				puts((paused = !paused)? "||": "  ");
 			} else if (shift_pressed) {
 				set_indicator(INDICATOR_REMOTE, (repeat = !repeat));
 			} else if (on_pressed) {
@@ -77,12 +75,50 @@ parse_int(SAT_STRING *str)
 
 
 void
-print_offset(SAT_STRING *str)
+draw_line(unsigned row, int length)
 {
+	uint8_t *p = __display_buf + row * BYTES_PER_ROW + 2;
+	int i;
+	for (i = 0; i < length / 8; i++) {
+		p[i] = 0xFF;
+	}
+	p[i] = 0xFF << (length & 0x7) >> 8;
+}
+
+
+void
+init_progress_bar(SAT_STRING *str)
+{
+	for (int row = BAR_TOP; row < BAR_TOP + BAR_HEIGHT + 2; row++) {
+		memset(&__display_buf[row * BYTES_PER_ROW], 0x00, 16);
+		__display_buf[row * BYTES_PER_ROW + 1] = 0x80;  // left border
+		__display_buf[row * BYTES_PER_ROW + 15] = 0x1;  // right border
+	}
+	draw_line(BAR_TOP, BAR_WIDTH + 1);  // top border
+	draw_line(BAR_TOP + BAR_HEIGHT + 1, BAR_WIDTH + 1);  // bottom border
+
+	char buf[7];
+	utoa(str->end - str->begin, buf, 10);
+	gotoxy(30 - strlen(buf), 6);
+	puts(buf);
+}
+
+
+void
+update_progress_bar(SAT_STRING *str, const char *melody)
+{
+	unsigned
+		current = str->cursor - melody,
+		total = str->end - melody,
+		pixels = BAR_WIDTH * current / total;
+
+	for (int row = BAR_TOP + 1; row < BAR_TOP + BAR_HEIGHT + 1; row++) {
+		draw_line(row, pixels);  // progress bar
+	}
+
 	char buf[7];
 	utoa(str->cursor - str->begin, buf, 10);
-	putchar(' ');
-	putchar(' ');
+	gotoxy(4, 6);
 	puts(buf);
 }
 
@@ -90,10 +126,9 @@ print_offset(SAT_STRING *str)
 void
 raise(SAT_STRING *str)
 {
-	gotoxy(2, 2);
+	gotoxy(2, 3);
 	puts(str->cursor >= str->end? "End of file": "Interrupted");
-	puts("  Press any key to exit\n\n  At file position:");
-	print_offset(str);
+	puts("  Press any key to exit");
 	while (any_key_pressed);
 	while (!any_key_pressed);
 	while (any_key_pressed);
@@ -111,16 +146,14 @@ duration_parser(SAT_STRING *str)
 void
 melody_parser(SAT_STRING *str)
 {
-	const char *cursor = str->cursor;
-	str->cursor = str->end;
-	print_offset(str);
+	const char *melody = str->cursor;
+
 begin:
-	str->cursor = cursor;
+	str->cursor = melody;
+	init_progress_bar(str);
 
 	while (TRUE) {
-		gotoxy(0, 3);
-		print_offset(str);
-		putchar('\n');
+		update_progress_bar(str, melody);
 
 		// get optional duration
 		int duration = duration_parser(str);
@@ -128,8 +161,7 @@ begin:
 		// convert ANSI note to MIDI note
 		int note = 0;
 		char c = toupper(peek(str));
-		putchar(' ');
-		putchar(' ');
+		gotoxy(15, 6);
 		putchar(c);
 		if ('A' <= c && c <= 'G') {
 			const char notes[] = {9, 11, 0, 2, 4, 5, 7};
@@ -188,6 +220,8 @@ begin:
 	if (repeat) {
 		goto begin;
 	} else {
+		gotoxy(1, 7);
+		puts("[]");
 		raise(str);
 	}
 }

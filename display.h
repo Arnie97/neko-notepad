@@ -33,6 +33,10 @@ struct rom {
 #define SCREEN_HEIGHT   (*(int *)0x0730000c >> 8)
 #define BYTES_PER_ROW   20
 
+#define BAR_TOP         45
+#define BAR_HEIGHT      4
+#define BAR_WIDTH       (128 - 3 * 8)
+
 struct font {
 	char ROWS;
 	char COLS_STORAGE;
