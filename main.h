@@ -24,11 +24,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <stdint.h>
 #include <satdir.h>
 
+#define window static int
+
 int main(void);
 int event_handler(unsigned row, unsigned col);
-int note_explorer(SAT_DIR_ENTRY *init);
-int note_viewer(unsigned sat_addr, SAT_DIR_ENTRY *ref);
-int font_config(SAT_DIR_ENTRY *ref);
+window note_explorer(SAT_DIR_ENTRY *init);
+window note_viewer(unsigned sat_addr, SAT_DIR_ENTRY *ref);
+window font_config(SAT_DIR_ENTRY *ref);
 
 uint16_t hash(const char *str);
 

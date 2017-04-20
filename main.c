@@ -99,7 +99,7 @@ event_handler(unsigned row, unsigned col)
 }
 
 
-void
+static void
 display_title(const char *str)
 {
 	unsigned len = strlen(str) + 2;
@@ -126,7 +126,7 @@ display_title(const char *str)
 }
 
 
-void
+static void
 display_count(unsigned count, const char *name)
 {
 	putchar(' ');
@@ -142,7 +142,7 @@ display_count(unsigned count, const char *name)
 }
 
 
-void
+static void
 display_item(unsigned count, SAT_OBJ_DSCR *obj)
 {
 	const char *name = obj->name + (obj->name[0] == '\'');
@@ -156,7 +156,7 @@ display_item(unsigned count, SAT_OBJ_DSCR *obj)
 }
 
 
-int
+window
 note_explorer(SAT_DIR_ENTRY *init)
 {
 	display_title("Neko Notepad");
@@ -197,16 +197,16 @@ note_explorer(SAT_DIR_ENTRY *init)
 		} else if (key == 20 || key == 21) {
 			pop(&head);
 			return note_explorer(pop(&head));  // page up
-		} else if (key == 31) {
+		} else if (key == 31) {  // [VIEWS]
 			return font_config(head? head->data: NULL);
-		} else if (1 <= key && key <= count) {
+		} else if (1 <= key && key <= count) {  // numbers
 			return note_viewer(entries[key], head? head->data: NULL);
 		}
 	}
 }
 
 
-int
+window
 note_viewer(unsigned sat_addr, SAT_DIR_ENTRY *ref)
 {
 	NODE *head = NULL;
@@ -236,7 +236,7 @@ note_viewer(unsigned sat_addr, SAT_DIR_ENTRY *ref)
 }
 
 
-int
+window
 font_config(SAT_DIR_ENTRY *ref)
 {
 	display_title("Select font size");

@@ -24,7 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "display.h"
 
 
-void *
+static void *
 get_pixel_font(SAT_STRING *str, struct font *f)
 {
 	int page = peek(str) - 0xA0;  // 区码
