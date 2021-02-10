@@ -103,7 +103,9 @@ for line in sys.stdin:
 
 
 with open('UC1701_charset.h', 'w') as f:
-    all_euc_cn_codepoints = itertools.product(*map(range, [87, 94]))
+    all_euc_cn_codepoints = itertools.product(
+        itertools.chain(range(15, 87), range(9)),
+        range(94))
     for x, y in all_euc_cn_codepoints:
         key = ((0xA1 + x) << 8) | (0xA1 + y)
 
