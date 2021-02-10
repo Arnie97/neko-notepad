@@ -116,10 +116,10 @@ with open('UC1701_charset.h', 'w') as f:
 
         transposed_buffer = [
             sum(
-                ((byte << x_offset << 1 >> pixel_size) & 1) << y_offset
+                ((byte << x_offset << 1 >> pixel_size) & 1) << y_offset >> 1
                 for y_offset, byte in enumerate(in_buffer)
             )
-            for x_offset in range(pixel_size)
+            for x_offset in range(1, pixel_size)
         ]
 
         f.write('    {')
