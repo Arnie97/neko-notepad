@@ -94,7 +94,7 @@ for line in sys.stdin:
                         buffer[i] <<= -x_offset
                     print(
                         format(buffer[i], '0%db' % width).
-                        translate({ord('0'): '..', ord('1'): '##'})
+                        translate({ord('0'): '..', ord('1'): '[]'})
                     )
                 buffer.extend(itertools.repeat(0, y_offset))
 
@@ -102,12 +102,11 @@ for line in sys.stdin:
                 break
 
 
-all_euc_cn_codepoints = map(
-    lambda pair: ((0xA1 + pair[0]) << 8) | (0xA1 + pair[1]),
-    itertools.product(*map(range, [87, 94]))
-)
-with open('HZK%d' % pixel_size, 'wb') as f:
-    for key in all_euc_cn_codepoints:
+with open('UC1701_charset.h', 'w') as f:
+    all_euc_cn_codepoints = itertools.product(*map(range, [87, 94]))
+    for x, y in all_euc_cn_codepoints:
+        key = ((0xA1 + x) << 8) | (0xA1 + y)
+
         # Fill missing glyphs with zero
         in_buffer = storage.get(key, [0] * pixel_size)
 
@@ -115,21 +114,20 @@ with open('HZK%d' % pixel_size, 'wb') as f:
         while len(in_buffer) < pixel_size:
             in_buffer.insert(0, 0)
 
-        if pixel_size == 8:
-            out_buffer = in_buffer
+        transposed_buffer = [
+            sum(
+                ((byte << x_offset << 1 >> pixel_size) & 1) << y_offset
+                for y_offset, byte in enumerate(in_buffer)
+            )
+            for x_offset in range(pixel_size)
+        ]
 
-        else:
-            # reshape glyphs into bytes
-            out_buffer = []
-            out_cycle = itertools.cycle(reversed(range(8)))
-            for hex_data in in_buffer:
-                in_cycle = reversed(range(pixel_size))
-                for in_bit, out_bit in zip(in_cycle, out_cycle):
-                    # add a new byte to buffer
-                    if out_bit == 7:
-                        out_buffer.append(0)
-
-                    # copy one bit to output
-                    out_buffer[-1] |= ((hex_data >> in_bit) & 1) << out_bit
-
-        f.write(bytes(out_buffer))
+        f.write('    {')
+        for offset, byte in enumerate(transposed_buffer):
+            if offset:
+                f.write(', ')
+            f.write('0x%02x' % byte)
+        char = int.to_bytes(key, 2, 'big').decode('gb2312', 'ignore')
+        f.write(
+            '}, // [%02d%02d %04x %s] %s\n' %
+            (x, y, key, ascii(char).replace("'", ''), char or 'FREE'))
